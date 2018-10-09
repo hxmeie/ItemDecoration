@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
+import android.support.annotation.Px;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -18,12 +19,12 @@ import android.view.View;
  * <p>
  * 1、自定义相应属性
  * LinearItemDecoration decoration=new LinearItemDecoration.Builder(this)
- * .colorRes(R.color.aaaa)
+ * .colorRes(R.colorRes.aaaa)
  * .marginLeft(SizeUtil.dp2px(15))
  * .marginRight(SizeUtil.dp2px(15))
  * .drawHeader(false)
  * .drawFooter(false)
- * .dividerHeight(SizeUtil.dp2px(10))
+ * .dividerSize(SizeUtil.dp2px(10))
  * .build();
  * <p>
  * 2、使用默认值
@@ -69,7 +70,7 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
             int left = childView.getLeft() + builder.marginLeft - parent.getPaddingLeft();
             int top = childView.getBottom();
             int right = childView.getRight() - builder.marginRight + parent.getPaddingRight();
-            int bottom = top + builder.dividerHeight;
+            int bottom = top + builder.dividerSize;
             c.drawRect(left, top, right, bottom, paint);
         }
     }
@@ -83,7 +84,7 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
                 || ((position == childCount - 2) && !builder.drawFooter)) {
             return;
         }
-        int bottom = builder.dividerHeight;
+        int bottom = builder.dividerSize;
         outRect.set(0, 0, 0, bottom);
     }
 
@@ -92,7 +93,7 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
         private boolean drawFooter = true;//最后一项顶部是否画线，默认画
         private int marginLeft = 0;
         private int marginRight = 0;
-        private int dividerHeight = 2;//横线分割线宽度，默认2px
+        private int dividerSize = 2;//横线分割线宽度，默认2px
         private int color = Color.parseColor("#000000");//Color
         private Context c;
 
@@ -110,19 +111,19 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
             return this;
         }
 
-        public Builder marginLeft(int left) {
+        public Builder marginLeft(@Px int left) {
             this.marginLeft = left;
             return this;
         }
 
-        public Builder marginRight(int right) {
+        public Builder marginRight(@Px int right) {
             this.marginRight = right;
             return this;
         }
 
 
-        public Builder dividerHeight(int dividerHeight) {
-            this.dividerHeight = dividerHeight;
+        public Builder dividerSize(@Px int dividerSize) {
+            this.dividerSize = dividerSize;
             return this;
         }
 

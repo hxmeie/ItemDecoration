@@ -2,10 +2,13 @@ package com.hxm.itemdecoration.decoration;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.annotation.Px;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -45,34 +48,14 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
         int spanCount = getSpanCount(parent);
-        int childCount = parent.getAdapter().getItemCount();
-        int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
-        if (mBuilder.isExistHeadView) {
-            itemPosition -= 1;
-        }
-        if (mBuilder.isShowHeadDivider && itemPosition == -1)
-            outRect.set(0, 0, 0, mBuilder.dividerHorSize);
-        if (itemPosition < 0)
-            return;
-        if (mBuilder.isExistFootView) {
-            if (mBuilder.isExistHeadView) {
-                if (itemPosition + 2 == childCount) {
-                    outRect.set(0, 0, 0, 0);
-                    return;
-                }
-            } else {
-                if (itemPosition + 1 == childCount) {
-                    outRect.set(0, 0, 0, 0);
-                    return;
-                }
-            }
-        }
-
+        int itemCount = parent.getAdapter().getItemCount();
+        int itemPosition = parent.getChildLayoutPosition(view);
         int column = itemPosition % spanCount;
         int bottom = 0;
         int left = column * mBuilder.dividerVerSize / spanCount;
         int right = mBuilder.dividerVerSize - (column + 1) * mBuilder.dividerVerSize / spanCount;
-        if (!(isLastRaw(parent, itemPosition, spanCount, childCount) && !mBuilder.isShowLastDivider))
+//        if (!(isLastRaw(parent, itemPosition, spanCount, itemCount) && !mBuilder.showAround))
+        if (!isLastRaw(parent, itemPosition, spanCount, itemCount))
             bottom = mBuilder.dividerHorSize;
         outRect.set(left, 0, right, bottom);
         marginOffsets(outRect, spanCount, itemPosition);
@@ -82,11 +65,6 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         int childCount = parent.getChildCount();
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-
-            //is draw head divider
-//            if (parent.getChildViewHolder(child).getItemViewType() == 1 && !mBuilder.isShowHeadDivider)
-            if (mBuilder.isExistHeadView && !mBuilder.isShowHeadDivider)
-                continue;
             RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
             final int left = child.getLeft() - params.leftMargin;
             final int right = child.getRight() + params.rightMargin;
@@ -99,19 +77,15 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     private void drawVertical(Canvas c, RecyclerView parent) {
         final int childCount = parent.getChildCount();
         for (int i = 0; i < childCount; i++) {
-
             final View child = parent.getChildAt(i);
-
-            //remove the rightmost divider
-            if ((parent.getChildAdapterPosition(child)) % getSpanCount(parent) == 0)
-                continue;
+//            if ((parent.getChildAdapterPosition(child)) % getSpanCount(parent) == 0)
+//                continue;
             final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
                     .getLayoutParams();
             final int top = child.getTop() - params.topMargin;
             final int bottom = child.getBottom() + params.bottomMargin + mBuilder.dividerHorSize;
             final int left = child.getRight() + params.rightMargin;
             final int right = left + mBuilder.dividerVerSize;
-
             c.drawRect(left, top, right, bottom, mVerPaint);
         }
     }
@@ -129,6 +103,9 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         return spanCount;
     }
 
+    /**
+     * 是否是最后一行
+     */
     private boolean isLastRaw(RecyclerView parent, int pos, int spanCount,
                               int childCount) {
         RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
@@ -161,18 +138,12 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     public static class Builder {
-        int headerType = 0;//header的ViewHolderType
-        int headerNum = 0;//header数量
-        int footerNum = 0;//footer数量
-        int horColor;//横向线颜色
-        int verColor;//纵向线颜色
-        int dividerHorSize;//横向线宽度
-        int dividerVerSize;//纵向线宽度
-        int marginLeft, marginRight;//左右两侧间距
-        boolean isShowLastDivider = false;//
-        boolean isExistHeadView = false;//
-        boolean isExistFootView = false;//
-        boolean isShowHeadDivider = false;//
+        private int horColor = Color.parseColor("#000000");//横向线颜色
+        private int verColor = Color.parseColor("#000000");//纵向线颜色
+        private int dividerHorSize = 2;//横向线宽度
+        private int dividerVerSize = 2;//纵向线宽度
+        private int marginLeft = 0, marginRight = 0;//左右两侧间距
+        private boolean showAround;//四周是否显示
         private Context c;
 
         public Builder(Context c) {
@@ -181,43 +152,56 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
 
         /**
          * 设置divider的颜色
-         *
-         * @param color
-         * @return
          */
-        public Builder color(@ColorRes int color) {
-            this.horColor = c.getResources().getColor(color);
-            this.verColor = c.getResources().getColor(color);
+        public Builder colorRes(@ColorRes int color) {
+            this.horColor = ContextCompat.getColor(c, color);
+            this.verColor = ContextCompat.getColor(c, color);
+            return this;
+        }
+
+        /**
+         * 设置divider的颜色
+         */
+        public Builder colorInt(@ColorInt int color) {
+            this.horColor = color;
+            this.verColor = color;
             return this;
         }
 
         /**
          * 单独设置横向divider的颜色
-         *
-         * @param horColor
-         * @return
          */
-        public Builder horColor(@ColorRes int horColor) {
-            this.horColor = c.getResources().getColor(horColor);
+        public Builder horColorRes(@ColorRes int horColor) {
+            this.horColor = ContextCompat.getColor(c, horColor);
+            return this;
+        }
+
+        /**
+         * 单独设置横向divider的颜色
+         */
+        public Builder horColorInt(@ColorInt int horColor) {
+            this.horColor = horColor;
             return this;
         }
 
         /**
          * 单独设置纵向divider的颜色
-         *
-         * @param verColor
-         * @return
          */
-        public Builder verColor(@ColorRes int verColor) {
-            this.verColor = c.getResources().getColor(verColor);
+        public Builder verColorRes(@ColorRes int verColor) {
+            this.verColor = ContextCompat.getColor(c, verColor);
+            return this;
+        }
+
+        /**
+         * 单独设置纵向divider的颜色
+         */
+        public Builder verColorInt(@ColorInt int verColor) {
+            this.verColor = verColor;
             return this;
         }
 
         /**
          * 设置divider的宽度
-         *
-         * @param size
-         * @return
          */
         public Builder size(@Px int size) {
             this.dividerHorSize = size;
@@ -227,9 +211,6 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
 
         /**
          * 设置横向divider的宽度
-         *
-         * @param horSize
-         * @return
          */
         public Builder horSize(@Px int horSize) {
             this.dividerHorSize = horSize;
@@ -238,68 +219,18 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
 
         /**
          * 设置纵向divider的宽度
-         *
-         * @param verSize
-         * @return
          */
         public Builder verSize(@Px int verSize) {
             this.dividerVerSize = verSize;
             return this;
         }
 
-        /**
-         * 设置剔除HeadView的RecyclerView左右两边的外间距
-         *
-         * @param marginLeft
-         * @param marginRight
-         * @return
-         */
         public Builder margin(@Px int marginLeft, @Px int marginRight) {
             this.marginLeft = marginLeft;
             this.marginRight = marginRight;
             return this;
         }
 
-        /**
-         * 最后一行divider是否需要显示
-         *
-         * @param isShow
-         * @return
-         */
-        public Builder showLastDivider(boolean isShow) {
-            this.isShowLastDivider = isShow;
-            return this;
-        }
-
-        /**
-         * HeadView行divider是否需要显示
-         * Version 1.1 add
-         *
-         * @param isShow
-         * @return
-         */
-        public Builder showHeadDivider(boolean isShow) {
-            this.isShowHeadDivider = isShow;
-            return this;
-        }
-
-        /**
-         * 是否包含HeadView
-         *
-         * @param isExistHead
-         * @return
-         */
-        public Builder isExistHead(boolean isExistHead, int headerNum) {
-            this.isExistHeadView = isExistHead;
-            this.headerNum = headerNum;
-            return this;
-        }
-
-        public Builder isExistFoot(boolean isExistFoot, int footerNum) {
-            this.isExistFootView = isExistFoot;
-            this.footerNum = footerNum;
-            return this;
-        }
 
         public GridItemDecoration build() {
             return new GridItemDecoration(this);
