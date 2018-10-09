@@ -59,7 +59,7 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
         int itemCount = parent.getAdapter().getItemCount();
         for (int i = 0; i < childCount; i++) {
             View childView = parent.getChildAt(i);
-            int itemPosition = parent.getChildAdapterPosition(childView);
+            int itemPosition = parent.getChildLayoutPosition(childView);
             if (itemPosition == 0 && !builder.drawHeader)
                 continue;
             if (itemPosition == itemCount - 1)
@@ -77,7 +77,7 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
-        int position = parent.getChildAdapterPosition(view);
+        int position = parent.getChildLayoutPosition(view);
         int childCount = parent.getAdapter().getItemCount();
         if ((position == 0 && !builder.drawHeader) || (position == childCount - 1)
                 || ((position == childCount - 2) && !builder.drawFooter)) {
