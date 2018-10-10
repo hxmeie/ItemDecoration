@@ -19,10 +19,12 @@ import android.view.View;
  * 描述：
  */
 public class GridItemDecoration extends RecyclerView.ItemDecoration {
+    public static final int VERTICAL = GridLayoutManager.VERTICAL;
+    public static final int HORIZONTAL = GridLayoutManager.HORIZONTAL;
     private Paint mVerPaint, mHorPaint;
     private Builder mBuilder;
 
-    // TODO: 2018/10/8 未完成
+    // TODO: 2018/10/8 未完成,但是可以用了，还需要添加方向和四周是否有divider
     GridItemDecoration(Builder builder) {
         init(builder);
     }
@@ -54,8 +56,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         int bottom = 0;
         int left = column * mBuilder.dividerVerSize / spanCount;
         int right = mBuilder.dividerVerSize - (column + 1) * mBuilder.dividerVerSize / spanCount;
-//        if (!(isLastRaw(parent, itemPosition, spanCount, itemCount) && !mBuilder.showAround))
-        if (!isLastRaw(parent, itemPosition, spanCount, itemCount))
+        if (!isLastRow(parent, itemPosition, spanCount, itemCount))
             bottom = mBuilder.dividerHorSize;
         outRect.set(left, 0, right, bottom);
         marginOffsets(outRect, spanCount, itemPosition);
@@ -106,7 +107,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     /**
      * 是否是最后一行
      */
-    private boolean isLastRaw(RecyclerView parent, int pos, int spanCount,
+    private boolean isLastRow(RecyclerView parent, int pos, int spanCount,
                               int childCount) {
         RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
         if (layoutManager instanceof GridLayoutManager) {
@@ -143,6 +144,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         private int dividerHorSize = 2;//横向线宽度
         private int dividerVerSize = 2;//纵向线宽度
         private int marginLeft = 0, marginRight = 0;//左右两侧间距
+        private int orientation = VERTICAL;//滑动方向，默认垂直
         private boolean showAround;//四周是否显示
         private Context c;
 
@@ -228,6 +230,19 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         public Builder margin(@Px int marginLeft, @Px int marginRight) {
             this.marginLeft = marginLeft;
             this.marginRight = marginRight;
+            return this;
+        }
+
+        /**
+         * 设置滑动方向
+         */
+        public Builder orientation(int orientation) {
+            this.orientation = orientation;
+            return this;
+        }
+
+        public Builder showAround(boolean showAround) {
+            this.showAround = showAround;
             return this;
         }
 
