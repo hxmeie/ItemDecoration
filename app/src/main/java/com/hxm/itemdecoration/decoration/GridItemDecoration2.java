@@ -219,6 +219,31 @@ public class GridItemDecoration2 extends RecyclerView.ItemDecoration {
         }
     }
 
+    /**
+     * 是否是最后一行
+     */
+    private boolean isLastRow(RecyclerView parent, int pos, int spanCount,
+                              int childCount) {
+        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager) {
+            int lastRowCount = childCount % spanCount;
+            lastRowCount = lastRowCount == 0 ? spanCount : lastRowCount;
+            return pos >= childCount - lastRowCount;
+        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            int orientation = ((StaggeredGridLayoutManager) layoutManager)
+                    .getOrientation();
+            // StaggeredGridLayoutManager 且纵向滚动
+            if (orientation == StaggeredGridLayoutManager.VERTICAL) {
+                childCount = childCount - childCount % spanCount;
+                return pos >= childCount;
+            } else {
+                // StaggeredGridLayoutManager 且横向滚动
+                return (pos + 1) % spanCount == 0;
+            }
+        }
+        return false;
+    }
+
     private int getSpanCount(RecyclerView parent) {
         RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
         if (layoutManager instanceof GridLayoutManager) {

@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
+import android.support.annotation.IntDef;
 import android.support.annotation.Px;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
@@ -14,9 +15,12 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Created by hxm on 2018/3/19.
- * 描述：
+ * 描述：todo: 适配瀑布流StaggeredGridLayoutManager,水平滑动方向
  */
 public class GridItemDecoration extends RecyclerView.ItemDecoration {
     public static final int VERTICAL = GridLayoutManager.VERTICAL;
@@ -24,7 +28,6 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     private Paint mVerPaint, mHorPaint;
     private Builder mBuilder;
 
-    // TODO: 2018/10/8 未完成,但是可以用了，还需要添加方向和四周是否有divider
     GridItemDecoration(Builder builder) {
         init(builder);
     }
@@ -39,6 +42,10 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         mHorPaint.setColor(builder.horColor);
     }
 
+    /**
+     * 需要注意的一点是 getItemOffsets 是针对每一个 ItemView，而 onDraw 方法却是针对 RecyclerView 本身，
+     * 所以在 onDraw 方法中需要遍历屏幕上可见的 ItemView，分别获取它们的位置信息，然后分别的绘制对应的分割线。
+     */
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
         super.onDraw(c, parent, state);
@@ -49,6 +56,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
+        //每一个itemView的（left+right）相等且（top+bottom）也相等，这样才能保证itemView大小都一样
         int spanCount = getSpanCount(parent);
         int itemCount = parent.getAdapter().getItemCount();
         int itemPosition = parent.getChildLayoutPosition(view);
@@ -56,38 +64,87 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         int bottom = 0;
         int left = column * mBuilder.dividerVerSize / spanCount;
         int right = mBuilder.dividerVerSize - (column + 1) * mBuilder.dividerVerSize / spanCount;
-        if (!isLastRow(parent, itemPosition, spanCount, itemCount))
+        if (!isLastRow(itemPosition, spanCount, itemCount))
             bottom = mBuilder.dividerHorSize;
         outRect.set(left, 0, right, bottom);
-        marginOffsets(outRect, spanCount, itemPosition);
+        //是否显示四周的
+        if (mBuilder.showAround) {
+            marginLeftAndRightOffsets(outRect, spanCount, itemPosition);
+            marginTopAndBottomOffsets(outRect, spanCount, itemPosition, itemCount);
+        }
+    }
+
+    private void marginLeftAndRightOffsets(Rect outRect, int spanCount, int itemPosition) {
+        if (mBuilder.marginRight == 0 && mBuilder.marginLeft == 0)
+            return;
+        int average = (mBuilder.marginLeft + mBuilder.marginRight) / spanCount;
+        outRect.left += (mBuilder.marginLeft - (itemPosition % spanCount) * average);
+        outRect.right += ((itemPosition % spanCount) + 1) * average - mBuilder.marginLeft;
+    }
+
+    private void marginTopAndBottomOffsets(Rect outRect, int spanCount, int itemPosition, int itemCount) {
+        // TODO: 2019/3/15 计算垂直方向
+        if (mBuilder.marginTop == 0 && mBuilder.marginBottom == 0)
+            return;
+        if (isFirstRow(itemPosition, spanCount))
+            outRect.top += mBuilder.marginTop;
+        if (isLastRow(itemPosition, spanCount, itemCount))
+            outRect.bottom += mBuilder.marginBottom;
+
     }
 
     private void drawHorizontal(Canvas c, RecyclerView parent) {
+        // TODO: 2019/3/15 和竖线原理一样
         int childCount = parent.getChildCount();
+        int spanCount = getSpanCount(parent);
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
-            final int left = child.getLeft() - params.leftMargin;
-            final int right = child.getRight() + params.rightMargin;
-            final int top = child.getBottom() + params.bottomMargin;
-            final int bottom = top + mBuilder.dividerHorSize;
-            c.drawRect(left, top, right, bottom, mHorPaint);
+            if (mBuilder.showAround) {
+                // FIXME: 2019/3/15 有问题
+                final int l = isFirstRow(i, spanCount) ? child.getLeft() - mBuilder.marginLeft :
+                        child.getLeft() - mBuilder.dividerVerSize;
+                final int t = isFirstRow(i, spanCount) ? child.getTop() - mBuilder.marginTop : 0;
+                final int r = isLastColumn(i, spanCount, childCount) && isFirstRow(i, spanCount) ?
+                        child.getRight() + mBuilder.marginRight : child.getRight();
+                final int b = isLastRow(i, spanCount, childCount) ? mBuilder.marginBottom :
+                        t + mBuilder.dividerHorSize;
+                c.drawRect(l, t, r, b, mHorPaint);
+            } else {
+                final int left = child.getLeft();
+                final int right = child.getRight();
+                final int top = isFirstRow(i, spanCount) ? 0 : child.getBottom();
+                final int bottom = isLastRow(i, spanCount, childCount) ? 0 :
+                        top + mBuilder.dividerHorSize;
+                c.drawRect(left, top, right, bottom, mHorPaint);
+            }
         }
     }
 
     private void drawVertical(Canvas c, RecyclerView parent) {
         final int childCount = parent.getChildCount();
+        int spanCount = getSpanCount(parent);
         for (int i = 0; i < childCount; i++) {
             final View child = parent.getChildAt(i);
-//            if ((parent.getChildAdapterPosition(child)) % getSpanCount(parent) == 0)
-//                continue;
-            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
-                    .getLayoutParams();
-            final int top = child.getTop() - params.topMargin;
-            final int bottom = child.getBottom() + params.bottomMargin + mBuilder.dividerHorSize;
-            final int left = child.getRight() + params.rightMargin;
-            final int right = left + mBuilder.dividerVerSize;
-            c.drawRect(left, top, right, bottom, mVerPaint);
+            if (mBuilder.showAround) {
+                final int l = isFirstColumn(i, spanCount) ? child.getLeft() - mBuilder.marginLeft :
+                        child.getLeft() - mBuilder.dividerVerSize;
+                final int t = child.getTop();
+                final int r = isFirstColumn(i, spanCount) ? l + mBuilder.marginLeft :
+                        l + mBuilder.dividerVerSize;
+                final int b = child.getBottom() + mBuilder.dividerHorSize;
+                c.drawRect(l, t, r, b, mVerPaint);
+                if (isLastColumn(i, spanCount, childCount)) {
+                    c.drawRect(child.getRight(), t, child.getRight() + mBuilder.marginRight, b, mVerPaint);
+                }
+            } else {
+                final int left = isFirstColumn(i, spanCount) ? 0 :
+                        child.getLeft() - mBuilder.dividerVerSize;
+                final int top = child.getTop();
+                final int right = isLastColumn(i, spanCount, childCount) ? 0 :
+                        left + mBuilder.dividerVerSize;
+                final int bottom = child.getBottom() + mBuilder.dividerHorSize;
+                c.drawRect(left, top, right, bottom, mVerPaint);
+            }
         }
     }
 
@@ -105,37 +162,62 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     }
 
     /**
-     * 是否是最后一行
+     * 是否是第一行
      */
-    private boolean isLastRow(RecyclerView parent, int pos, int spanCount,
-                              int childCount) {
-        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
-        if (layoutManager instanceof GridLayoutManager) {
-            childCount = childCount - childCount % spanCount;
-            return pos >= childCount;
-        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            int orientation = ((StaggeredGridLayoutManager) layoutManager)
-                    .getOrientation();
-            // StaggeredGridLayoutManager 且纵向滚动
-            if (orientation == StaggeredGridLayoutManager.VERTICAL) {
-                childCount = childCount - childCount % spanCount;
-                return pos >= childCount;
-            } else {
-                // StaggeredGridLayoutManager 且横向滚动
-                return (pos + 1) % spanCount == 0;
-            }
+    private boolean isFirstRow(int position, int spanCount) {
+        if (mBuilder.orientation == VERTICAL) {
+            //垂直方向上
+            return position < spanCount;
+        } else {
+            //水平方向上
+            return position % spanCount == 0;
         }
-        return false;
     }
 
-    private void marginOffsets(Rect outRect, int spanCount, int itemPosition) {
-        if (mBuilder.marginRight == 0 && mBuilder.marginLeft == 0)
-            return;
+    /**
+     * 是否是最后一行
+     */
+    private boolean isLastRow(int position, int spanCount, int childCount) {
+        if (mBuilder.orientation == VERTICAL) {
+            int lastRowCount = childCount % spanCount;
+            lastRowCount = lastRowCount == 0 ? spanCount : lastRowCount;
+            return position >= childCount - lastRowCount;
+        } else {
+            return (position + 1) % spanCount == 0;
+        }
+    }
 
-        int itemShrink = (mBuilder.marginLeft + mBuilder.marginRight) / spanCount;
-        outRect.left += (mBuilder.marginLeft - (itemPosition % spanCount) * itemShrink);
+    /**
+     * 是否是第一列
+     */
+    private boolean isFirstColumn(int position, int spanCount) {
+        if (mBuilder.orientation == VERTICAL) {
+            return position % spanCount == 0;
+        } else {
+            return position < spanCount;
+        }
+    }
 
-        outRect.right += ((itemPosition % spanCount) + 1) * itemShrink - mBuilder.marginLeft;
+    /**
+     * 是否是最后一列
+     */
+    private boolean isLastColumn(int position, int spanCount, int childCount) {
+        if (mBuilder.orientation == VERTICAL) {
+            return (position + 1) % spanCount == 0;
+        } else {
+            int lastColumnCount = childCount % spanCount;
+            lastColumnCount = lastColumnCount == 0 ? spanCount : lastColumnCount;
+            //最后一列itemView的position一定大于等于itemView总数量-最后一列itemView数量
+            return position >= childCount - lastColumnCount;
+        }
+    }
+
+    @IntDef({
+            HORIZONTAL,
+            VERTICAL
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface Orientation {
     }
 
     public static class Builder {
@@ -143,9 +225,11 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         private int verColor = Color.parseColor("#000000");//纵向线颜色
         private int dividerHorSize = 2;//横向线宽度
         private int dividerVerSize = 2;//纵向线宽度
-        private int marginLeft = 0, marginRight = 0;//左右两侧间距
+        private int marginLeft = 0, marginRight = 0;
+        private int marginTop = 0, marginBottom = 0;
+        private int margin = 0;
         private int orientation = VERTICAL;//滑动方向，默认垂直
-        private boolean showAround;//四周是否显示
+        private boolean showAround = false;//四周是否显示
         private Context c;
 
         public Builder(Context c) {
@@ -227,16 +311,50 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
             return this;
         }
 
-        public Builder margin(@Px int marginLeft, @Px int marginRight) {
+        public Builder margin(@Px int margin) {
+            this.marginLeft = margin;
+            this.marginRight = margin;
+            this.marginTop = margin;
+            this.marginBottom = margin;
+            return this;
+        }
+
+        public Builder marginLeft(@Px int marginLeft) {
             this.marginLeft = marginLeft;
+            return this;
+        }
+
+        public Builder marginRight(@Px int marginRight) {
             this.marginRight = marginRight;
+            return this;
+        }
+
+        public Builder marginTop(@Px int marginTop) {
+            this.marginTop = marginTop;
+            return this;
+        }
+
+        public Builder marginBottom(@Px int marginBottom) {
+            this.marginBottom = marginBottom;
+            return this;
+        }
+
+        public Builder marginLeftAndRight(@Px int margin) {
+            this.marginLeft = margin;
+            this.marginRight = margin;
+            return this;
+        }
+
+        public Builder marginTopAndBottom(@Px int margin) {
+            this.marginTop = margin;
+            this.marginBottom = margin;
             return this;
         }
 
         /**
          * 设置滑动方向
          */
-        public Builder orientation(int orientation) {
+        public Builder orientation(@Orientation int orientation) {
             this.orientation = orientation;
             return this;
         }

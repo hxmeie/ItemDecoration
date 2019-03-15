@@ -30,11 +30,12 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemHolder> {
     @Override
     public void onBindViewHolder(@NonNull ItemHolder holder, int position) {
         holder.textView.setText("item"+position);
-        if ((position&1)==1){
-            holder.textView.setBackgroundColor(Color.parseColor("#FF4081"));
-        }else {
-            holder.textView.setBackgroundColor(Color.parseColor("#3F51B5"));
-        }
+        holder.textView.setBackgroundColor(Color.parseColor("#3F51B5"));
+//        if ((position&1)==1){
+//            holder.textView.setBackgroundColor(Color.parseColor("#FF4081"));
+//        }else {
+//            holder.textView.setBackgroundColor(Color.parseColor("#3F51B5"));
+//        }
 //        holder.textView.setBackgroundColor(Color.parseColor("#59B4654F"));
     }
 
