@@ -31,16 +31,13 @@ public class MainActivity extends AppCompatActivity {
 
 //        LinearItemDecoration decoration=new LinearItemDecoration(this);
 
-        rv.setLayoutManager(new GridLayoutManager(this, 3));
+        rv.setLayoutManager(new GridLayoutManager(this, 4));
         GridItemDecoration decoration = new GridItemDecoration.Builder(this)
-                .size(SizeUtil.dp2px(10))
+                .size(SizeUtil.dp2px(5))
                 .verColorRes(R.color.aaaa)
                 .horColorRes(R.color.aaaa)
-                .showAround(true)
-                .marginLeft(40)
-                .marginRight(60)
-                .marginTop(50)
-                .marginBottom(10)
+//                .margin(SizeUtil.dp2px(5))
+//                .marginColorRes(R.color.colorAccent)
                 .build();
         rv.addItemDecoration(decoration);
         adapter = new ItemAdapter(this);
