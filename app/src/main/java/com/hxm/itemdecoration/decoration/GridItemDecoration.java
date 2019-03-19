@@ -22,16 +22,16 @@ import java.lang.annotation.RetentionPolicy;
  * Created by hxm on 2018/3/19.
  * 使用方法：
  * GridItemDecoration decoration = new GridItemDecoration.Builder(this)
- *                 .size(SizeUtil.dp2px(5))
- *                 .verColorRes(R.color.aaaa)
- *                 .horColorRes(R.color.aaaa)
- *                 .margin(SizeUtil.dp2px(5))
- *                 .marginColorRes(R.color.colorAccent)
- *                 .build();
+ * .size(SizeUtil.dp2px(5))
+ * .verColorRes(R.color.aaaa)
+ * .horColorRes(R.color.aaaa)
+ * .margin(SizeUtil.dp2px(5))
+ * .marginColorRes(R.color.colorAccent)
+ * .build();
  */
 public class GridItemDecoration extends RecyclerView.ItemDecoration {
-    public static final int VERTICAL = GridLayoutManager.VERTICAL;
-    public static final int HORIZONTAL = GridLayoutManager.HORIZONTAL;//暂时不支持水平方向，以后有空有兴趣就做
+    public static final int VERTICAL = Orientation.VERTICAL;
+    public static final int HORIZONTAL = Orientation.HORIZONTAL;//暂时不支持水平方向，以后有空有兴趣就做
     private Paint mVerPaint, mHorPaint, marginPaint;
     private Builder mBuilder;
 
@@ -253,6 +253,8 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     })
     @Retention(RetentionPolicy.SOURCE)
     private @interface Orientation {
+        int VERTICAL = GridLayoutManager.VERTICAL;
+        int HORIZONTAL = GridLayoutManager.HORIZONTAL;
     }
 
     public static class Builder {
@@ -264,7 +266,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
         private int marginLeft = 0, marginRight = 0;
         private int marginTop = 0, marginBottom = 0;
         private int margin = 0;
-        private int orientation = VERTICAL;//滑动方向，默认垂直
+        private int orientation = Orientation.VERTICAL;//滑动方向，默认垂直
         private Context c;
 
         public Builder(Context c) {
