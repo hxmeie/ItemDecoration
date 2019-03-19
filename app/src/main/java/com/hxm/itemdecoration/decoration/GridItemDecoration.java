@@ -108,7 +108,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     private void drawHorizontal(Canvas c, RecyclerView parent, int childCount, int itemCount, int spanCount) {
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            int position = parent.getChildAdapterPosition(child);
+            int position = parent.getChildLayoutPosition(child);
             if (isLastRow(position, spanCount, itemCount))
                 continue;
             final int left = child.getLeft();
@@ -123,7 +123,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
     private void drawVertical(Canvas c, RecyclerView parent, int childCount, int spanCount) {
         for (int i = 0; i < childCount; i++) {
             final View child = parent.getChildAt(i);
-            int position = parent.getChildAdapterPosition(child);
+            int position = parent.getChildLayoutPosition(child);
             if (isLastColumn(position, spanCount, childCount))
                 continue;
             final int left = child.getRight();
@@ -139,7 +139,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
             return;
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            int position = parent.getChildAdapterPosition(child);
+            int position = parent.getChildLayoutPosition(child);
             if (isFirstColumn(position, spanCount)) {
                 int l = child.getLeft() - mBuilder.marginLeft;
                 int t = child.getTop() - mBuilder.marginTop;
@@ -164,7 +164,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
             return;
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            int position = parent.getChildAdapterPosition(child);
+            int position = parent.getChildLayoutPosition(child);
             if (isFirstRow(position, spanCount)) {
                 int l = child.getLeft();
                 int t = child.getTop() - mBuilder.marginTop;
