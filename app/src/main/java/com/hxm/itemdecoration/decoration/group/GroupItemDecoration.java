@@ -163,7 +163,7 @@ public class GroupItemDecoration<Group, Child> extends RecyclerView.ItemDecorati
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
-        getItemOffsets(outRect, view, parent, parent.getChildViewHolder(view).getAdapterPosition());
+        getItemOffsets(outRect, view, parent, parent.getChildAdapterPosition(view));
     }
 
     /**
