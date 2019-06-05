@@ -20,8 +20,10 @@ public class MainActivity extends AppCompatActivity {
         rv.setLayoutManager(new LinearLayoutManager(this));
         LinearItemDecoration decoration = new LinearItemDecoration.Builder(this)
                 .colorRes(R.color.aaaa)
-//                .marginLeft(SizeUtil.dp2px(15))
-//                .marginRight(SizeUtil.dp2px(15))
+                .drawMargin(true)
+                .marginColorRes(R.color.colorAccent)
+                .marginLeft(SizeUtil.dp2px(15))
+                .marginRight(SizeUtil.dp2px(15))
 //                .drawHeader(false)
 //                .drawFooter(false)
                 .dividerSize(SizeUtil.dp2px(10))

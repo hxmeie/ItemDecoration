@@ -33,7 +33,7 @@ import android.view.View;
  * 描述：垂直方向，第一项顶部不画线，最后一项底部不划线
  */
 public class LinearItemDecoration extends RecyclerView.ItemDecoration {
-    private Paint paint;
+    private Paint paint, marginLeftPaint, marginRightPaint;
     private Builder builder;
 
     public LinearItemDecoration(Context context) {
@@ -51,6 +51,14 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
         paint.setColor(builder.color);
         paint.setStyle(Paint.Style.FILL);
         paint.setAntiAlias(true);
+        marginLeftPaint = new Paint();
+        marginLeftPaint.setColor(builder.marginLeftColor);
+        marginLeftPaint.setStyle(Paint.Style.FILL);
+        marginLeftPaint.setAntiAlias(true);
+        marginRightPaint = new Paint();
+        marginRightPaint.setColor(builder.marginRightColor);
+        marginRightPaint.setStyle(Paint.Style.FILL);
+        marginRightPaint.setAntiAlias(true);
     }
 
     @Override
@@ -67,11 +75,15 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
                 continue;
             if (itemPosition == itemCount - 2 && !builder.drawFooter)
                 continue;
-            int left = childView.getLeft() + builder.marginLeft - parent.getPaddingLeft();
+            int left = childView.getLeft() + builder.marginLeft;
             int top = childView.getBottom();
-            int right = childView.getRight() - builder.marginRight + parent.getPaddingRight();
+            int right = childView.getRight() - builder.marginRight;
             int bottom = top + builder.dividerSize;
             c.drawRect(left, top, right, bottom, paint);
+            if (builder.drawMargin) {
+                c.drawRect(childView.getLeft(), top, childView.getLeft() + builder.marginLeft, bottom, marginLeftPaint);
+                c.drawRect(childView.getRight(), top, childView.getRight() - builder.marginRight, bottom, marginRightPaint);
+            }
         }
     }
 
@@ -91,8 +103,11 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
     public static class Builder {
         private boolean drawHeader = true;//第一项底部是否画线，默认画
         private boolean drawFooter = true;//最后一项顶部是否画线，默认画
+        private boolean drawMargin = false;//绘制margin区域的颜色
         private int marginLeft = 0;
         private int marginRight = 0;
+        private int marginLeftColor = Color.parseColor("#000000");
+        private int marginRightColor = Color.parseColor("#000000");
         private int dividerSize = 2;//横线分割线宽度，默认2px
         private int color = Color.parseColor("#000000");//Color
         private Context c;
@@ -108,6 +123,11 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
 
         public Builder drawFooter(boolean b) {
             this.drawFooter = b;
+            return this;
+        }
+
+        public Builder drawMargin(boolean b) {
+            this.drawMargin = b;
             return this;
         }
 
@@ -134,6 +154,38 @@ public class LinearItemDecoration extends RecyclerView.ItemDecoration {
 
         public Builder colorRes(@ColorRes int color) {
             this.color = ContextCompat.getColor(c, color);
+            return this;
+        }
+
+        public Builder marginLeftColorInt(@ColorInt int color) {
+            this.marginLeftColor = color;
+            return this;
+        }
+
+        public Builder marginLeftColorRes(@ColorRes int color) {
+            this.marginLeftColor = ContextCompat.getColor(c, color);
+            return this;
+        }
+
+        public Builder marginRightColorInt(@ColorInt int color) {
+            this.marginRightColor = color;
+            return this;
+        }
+
+        public Builder marginRightColorRes(@ColorRes int color) {
+            this.marginRightColor = ContextCompat.getColor(c, color);
+            return this;
+        }
+
+        public Builder marginColorInt(@ColorInt int color) {
+            this.marginRightColor = color;
+            this.marginLeftColor = color;
+            return this;
+        }
+
+        public Builder marginColorRes(@ColorRes int color) {
+            this.marginLeftColor = ContextCompat.getColor(c, color);
+            this.marginRightColor = ContextCompat.getColor(c, color);
             return this;
         }
 
