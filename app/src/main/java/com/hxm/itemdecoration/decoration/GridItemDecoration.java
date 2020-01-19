@@ -110,7 +110,7 @@ public class GridItemDecoration extends RecyclerView.ItemDecoration {
             View child = parent.getChildAt(i);
             int position = parent.getChildLayoutPosition(child);
             if (isLastRow(position, spanCount, itemCount))
-                continue;
+                return;
             final int left = child.getLeft();
             final int top = child.getBottom();
             final int right = isLastColumn(position, spanCount, childCount) ? child.getRight() :
